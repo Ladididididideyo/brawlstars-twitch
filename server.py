@@ -13,27 +13,63 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+#  Twitch Imports
 from twitchAPI.helper import first
 from twitchAPI.twitch import Twitch
 from twitchAPI.oauth import UserAuthenticationStorageHelper
 from twitchAPI.object.eventsub import ChannelFollowEvent
 from twitchAPI.eventsub.websocket import EventSubWebsocket
 from twitchAPI.type import AuthScope
+from twitchAPI.oauth import UserAuthenticator
+
 import asyncio
+#  Flask Imports
+from flask import Flask, Response, render_template
+#  Misc Imports
 from dotenv import dotenv_values
+import random
+import time
+import json
+import threading
+from queue import Queue
+import aiohttp
 
 config = dotenv_values(".env")
 
-APP_ID = 'your_app_id'
-APP_SECRET = 'your_app_secret'
+APP_ID = config["APPLICATION_CLIENT_ID"]
+APP_SECRET = config["APPLICATION_CLIENT_SECRET"]
 TARGET_SCOPES = [AuthScope.MODERATOR_READ_FOLLOWERS]
+ranks_pool = ["Bronze", "Silver", "Gold", "Diamond", "Mythic", "Legendary", "Masters", "Pro"]
+FAKE_NAMES = [
+    "ShellySpammer", "ElPrimoLeap", "SpikeEnjoyer", "ColtMain99", 
+    "MortisGod", "LeonInvis", "BrawlStarsPro", "GamerTag420",
+    "NoobMaster69", "StarPlayer", "EdgarMain", "CrowPoison"
+]
 
+new_follower_queue = Queue()
+
+follower_display_time = 5
+check_for_new_followers_time = 1
+
+def trigger_fake_follow():
+
+    fake_user = random.choice(FAKE_NAMES)
+    random_rank = random.choice(ranks_pool)
+    
+    new_follower_queue.put({"username": fake_user, "rank": random_rank})
+    
+    print(f'{fake_user} now follows Ogr1sh!')
 
 async def on_follow(data: ChannelFollowEvent):
+    random_rank = random.choice(ranks_pool)
+    
+    new_follower_queue.put({"username": data.event.user_name, "rank": random_rank})
+    
     print(f'{data.event.user_name} now follows {data.event.broadcaster_user_name}!')
 
-
-async def run():
+async def run_twitch():
     twitch = await Twitch(APP_ID, APP_SECRET)
     helper = UserAuthenticationStorageHelper(twitch, TARGET_SCOPES)
     await helper.bind()
@@ -44,14 +80,40 @@ async def run():
     eventsub.start()
     
     await eventsub.listen_channel_follow_v2(user.id, user.id, on_follow)
-n
-    try:
-        input('press Enter to shut down...')
-    except KeyboardInterrupt:
-        pass
-    finally:
-        await eventsub.stop()
-        await twitch.close()
 
+    while True:
+        await asyncio.sleep(1)
 
-asyncio.run(run())
+def start_twitch_thread():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(run_twitch())
+
+threading.Thread(target=start_twitch_thread, daemon=True).start()
+
+# Flask App Setup
+app = Flask(__name__)
+
+@app.route('/follower_stream')
+def follower_stream():
+    def event_stream():
+        while True:
+            if not new_follower_queue.empty():
+                follower_info = new_follower_queue.get()
+            
+                json_data = json.dumps(follower_info)
+                yield f"data: {json_data}\n\n"
+                trigger_fake_follow()
+                time.sleep(follower_display_time)
+            else:
+                trigger_fake_follow()
+                time.sleep(check_for_new_followers_time)
+            
+    return Response(event_stream(), mimetype='text/event-stream')
+
+@app.route('/followers_rank')
+def index():
+    return render_template('follower_rank.html')
+
+if __name__ == '__main__':
+    app.run(port=int(config["WEB_SERVER_PORT"]), debug=False, threaded=True)
