@@ -37,7 +37,10 @@ from queue import Queue
 import aiohttp
 from playsound3 import playsound
 from pathlib import Path
+import logging
+import os
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 config = dotenv_values(".env")
 
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -66,11 +69,14 @@ def trigger_fake_follow():
     print(f'{fake_user} now follows Ogr1sh!')
 
 async def on_follow(data: ChannelFollowEvent):
+    logging.info(f'{data.event.user_name} now follows {data.event.broadcaster_user_name}!')
+    
     random_rank = random.choice(ranks_pool)
     
     new_follower_queue.put({"username": data.event.user_name, "rank": random_rank})
     
-    print(f'{data.event.user_name} now follows {data.event.broadcaster_user_name}!')
+    logging.info(f"Queued {data.event.user_name} to be displayed with rank {random_rank}")
+    
 
 async def run_twitch():
     twitch = await Twitch(APP_ID, APP_SECRET)
@@ -92,7 +98,7 @@ def start_twitch_thread():
     asyncio.set_event_loop(loop)
     loop.run_until_complete(run_twitch())
 
-threading.Thread(target=start_twitch_thread, daemon=True).start()
+# threading.Thread(target=start_twitch_thread, daemon=True).start()
 
 # Flask App Setup
 app = Flask(__name__)
@@ -108,7 +114,7 @@ def follower_stream():
                 yield f"data: {json_data}\n\n"
                 if DEMO_MODE:
                     trigger_fake_follow()
-                soundfile = PROJECT_DIR / "static" / "ranked_audio" / f"{follower_info["rank"]}.mp3"
+                threading.Thread(target=playsound, args=(soundfile,), daemon=True).start()
                 playsound(soundfile)
                 time.sleep(follower_display_time)
             else:
@@ -123,4 +129,6 @@ def index():
     return render_template('follower_rank.html')
 
 if __name__ == '__main__':
+    if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        threading.Thread(target=start_twitch_thread, daemon=True).start()
     app.run(port=int(config["WEB_SERVER_PORT"]), debug=False, threaded=True)
