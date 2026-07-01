@@ -1,6 +1,6 @@
 # brawlstars-twitch
 
-Turn your Twitch followers into an exciting, animated Brawl Stars-style overlay — complete with rank art, custom text, and per-rank audio cues. Perfect for livestreamers who want immediate, high-impact follower alerts that match the Brawl Stars aesthetic.
+Turn your Twitch followers into an exciting, animated Brawl Stars-style overlay — complete with rank art, custom text, and per-rank audio cues. Perfect for livestreamers who want immediate, high-quality follower notifications.
 
 Why this project?
 - Plug-and-play overlay: a browser-based overlay you can add to OBS as a Browser Source.
@@ -11,8 +11,7 @@ Why this project?
 Register your Twitch application
 1. Before creating your `.env`, register an application at https://dev.twitch.tv/docs/authentication/register-app.
 2. When registering the app, set the OAuth Redirect URL to:
-   `http://localhost:<YOUR_WEB_SERVER_PORT>/follower_rank`
-   (replace `<YOUR_WEB_SERVER_PORT>` with the port you plan to use, e.g. `1234`).
+   `http://localhost:17563`
 3. After registering, copy `example_.env.txt` to `.env` and set:
    - `APPLICATION_CLIENT_ID` to the Client ID from your app,
    - `APPLICATION_CLIENT_SECRET` to the Client Secret,
@@ -30,8 +29,8 @@ After you register the app and create your `.env`, follow these steps to get the
    - Double-click `start_server.bat` (Windows) or run `python server.py` in your activated virtualenv.
 
 3. Authorize the application:
-   - When the server starts it may print an authorization URL or prompt you to authorize the app. Open that URL in your browser and complete the OAuth flow for the Twitch app you registered (ensure you authorize with the broadcaster/moderator account you want to monitor).
-   - If you set the OAuth Redirect URL to `http://localhost:<WEB_SERVER_PORT>/follower_rank`, the OAuth flow will redirect to that page after authorization.
+   - When the server starts it may print an authorization URL or prompt you to authorize the app. Open that URL in your browser and complete the OAuth flow for the Twitch app you registered (ensur[...]
+   - If you set the OAuth Redirect URL to `http://localhost:17563`, the OAuth flow will redirect to that page after authorization.
 
 4. Add the overlay to OBS:
    - In OBS click the + button in Sources and choose "Browser".
