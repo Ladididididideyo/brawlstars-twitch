@@ -54,6 +54,7 @@ FAKE_NAMES = [
     "MortisGod", "LeonInvis", "BrawlStarsPro", "GamerTag420",
     "NoobMaster69", "StarPlayer", "EdgarMain", "CrowPoison"
 ]
+DEMO_MODE = True
 
 def trigger_fake_follow():
 
@@ -105,12 +106,14 @@ def follower_stream():
             
                 json_data = json.dumps(follower_info)
                 yield f"data: {json_data}\n\n"
-                trigger_fake_follow()
+                if DEMO_MODE:
+                    trigger_fake_follow()
                 soundfile = PROJECT_DIR / "static" / "ranked_audio" / f"{follower_info["rank"]}.mp3"
                 playsound(soundfile)
                 time.sleep(follower_display_time)
             else:
-                trigger_fake_follow()
+                if DEMO_MODE:
+                    trigger_fake_follow()
                 time.sleep(check_for_new_followers_time)
             
     return Response(event_stream(), mimetype='text/event-stream')
