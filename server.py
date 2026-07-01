@@ -54,7 +54,7 @@ FAKE_NAMES = [
     "MortisGod", "LeonInvis", "BrawlStarsPro", "GamerTag420",
     "NoobMaster69", "StarPlayer", "EdgarMain", "CrowPoison"
 ]
-DEMO_MODE = True
+DEMO_MODE = False
 
 def trigger_fake_follow():
 
