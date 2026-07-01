@@ -8,10 +8,38 @@ Why this project?
 - Customizable assets: swap images, audio, and text per-rank to match your brand.
 - Lightweight and local: runs on your streaming machine, no paid services required.
 
-Live demo (local):
-1. Configure `.env` (copy from `example_.env.txt`) with your Twitch app credentials and desired `WEB_SERVER_PORT`.
-2. Start the app: `python server.py` (or use `start_server.bat` on Windows).
-3. In OBS, add a Browser Source pointing to `http://localhost:<WEB_SERVER_PORT>/followers_rank` (set width/height to 1000x1000 for default layout).
+Register your Twitch application
+1. Before creating your `.env`, register an application at https://dev.twitch.tv/docs/authentication/register-app.
+2. When registering the app, set the OAuth Redirect URL to:
+   `http://localhost:<YOUR_WEB_SERVER_PORT>/follower_rank`
+   (replace `<YOUR_WEB_SERVER_PORT>` with the port you plan to use, e.g. `1234`).
+3. After registering, copy `example_.env.txt` to `.env` and set:
+   - `APPLICATION_CLIENT_ID` to the Client ID from your app,
+   - `APPLICATION_CLIENT_SECRET` to the Client Secret,
+   - `WEB_SERVER_PORT` to the same port you used in the OAuth Redirect URL above.
+
+Live demo (local)
+
+After you register the app and create your `.env`, follow these steps to get the overlay running locally:
+
+1. Install virtualenv and dependencies (Windows helper included):
+   - Double-click `install_venv.bat` to create a virtual environment and install requirements (Windows).
+   - On macOS/Linux, run the steps in the "Quick install" section below.
+
+2. Start the server:
+   - Double-click `start_server.bat` (Windows) or run `python server.py` in your activated virtualenv.
+
+3. Authorize the application:
+   - When the server starts it may print an authorization URL or prompt you to authorize the app. Open that URL in your browser and complete the OAuth flow for the Twitch app you registered (ensure you authorize with the broadcaster/moderator account you want to monitor).
+   - If you set the OAuth Redirect URL to `http://localhost:<WEB_SERVER_PORT>/follower_rank`, the OAuth flow will redirect to that page after authorization.
+
+4. Add the overlay to OBS:
+   - In OBS click the + button in Sources and choose "Browser".
+   - In the Browser source properties set the URL to:
+     `http://localhost:<WEB_SERVER_PORT>/followers_rank`
+     (replace `<WEB_SERVER_PORT>` with the port you set in `.env`).
+   - Set Width and Height to `1000` and `1000` (matches the default canvas).
+   - Click OK. You're done — resize the source in OBS however you like.
 
 Features
 - Animated rank icon with smooth easing and outline text
@@ -25,20 +53,25 @@ Requirements:
 - Python 3.9+ (recommended)
 - pip
 
-Steps:
+Steps (manual)
 1. Clone the repo
+   ```bash
    git clone https://github.com/Ladididididideyo/brawlstars-twitch
+   ```
 2. Create a virtualenv and install requirements:
+   ```bash
    python -m venv .venv
-   .venv\Scripts\activate       # Windows
-   source .venv/bin/activate    # macOS / Linux
+   # Windows
+   .venv\Scripts\activate
+   # macOS / Linux
+   source .venv/bin/activate
    pip install -r requirements.txt
-3. Copy `example_.env.txt` to `.env` and populate:
-   - APPLICATION_CLIENT_ID
-   - APPLICATION_CLIENT_SECRET
-   - WEB_SERVER_PORT (e.g. 1234)
+   ```
+3. Copy `example_.env.txt` to `.env` and populate the values as described above.
 4. Run the server:
+   ```bash
    python server.py
+   ```
 
 Configuration notes
 - The app reads config from `.env` via python-dotenv. Use `example_.env.txt` as a template.
@@ -71,4 +104,3 @@ License
 
 Credits
 - Built by Ogr1sh (2026). Uses twitchAPI, Flask, CreateJS, and playsound3.
-
