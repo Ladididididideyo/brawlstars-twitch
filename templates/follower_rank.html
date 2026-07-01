@@ -3,7 +3,7 @@
 		<style>
 			@font-face {
 				font-family: 'brawlstarsmenufont';
-				src: url('/static/fonts/lilitaone-regular-webfont.ttf') format('ttf'),
+				src: url('/static/fonts/lilitaone-regular-webfont.ttf') format('truetype');
 				font-weight: normal;
 				font-style: normal;
 			}
@@ -15,11 +15,10 @@
 		<script>
 			const port = 1234;
 			const staticFileEndpoint = `/static/`;
-			const eventSource = new EventSource(`http://localhost:${port}/follower_stream`);
 			const fps = 120;
-			const textOutlineWidth = 3;
+			const textOutlineWidth = 15;
 			const middleOfCanvasXY = 500;
-			const textYDefaultValue = 500;
+			const textYDefaultValue = 750;
 			
 			let init_state = false;
 			let stage = null;
@@ -42,27 +41,27 @@
 				return myBitmap;
 			}
 			
-			function rankedIconAnimation(bitmap, textFill , textOutline, alphaFadeInTime=1500, visibleWaitTime=2000,alphaFadeOutTime=1000, bounceToY=200, airTime=1500){
-				createjs.Tween.get(bitmap).to({ y: bounceToY }, airTime, createjs.Ease.elasticIn);
+			function rankedIconAnimation(bitmap, textFill , textOutline, alphaFadeInTime=1500, visibleWaitTime=2000,alphaFadeOutTime=1000, bounceToY=500, airTime=1000, easePower=2){
+				createjs.Tween.get(bitmap).to({ y: bounceToY }, airTime, createjs.Ease.quadIn);
 				createjs.Tween.get(bitmap)
-					.to({ alpha: 1 }, alphaFadeInTime, createjs.Ease.getPowIn)
+					.to({ alpha: 1 }, alphaFadeInTime, createjs.Ease.getPowIn(easePower))
 					.wait(visibleWaitTime + Math.abs((airTime - alphaFadeInTime)))                                    // Waits 1 second after finishing
-					.to({ alpha: 0 }, alphaFadeOutTime, createjs.Ease.getPowOut) // Fades out to 0 (Takes 1 second)
+					.to({ alpha: 0 }, alphaFadeOutTime, createjs.Ease.getPowOut(easePower)) // Fades out to 0 (Takes 1 second)
 					.call(function() {
 						stage.removeChild(bitmap);               // Deletes it from the stage completely
 					});
 				createjs.Tween.get(textFill)
-				.to({ alpha: 1 }, alphaFadeInTime, createjs.Ease.getPowIn)
+				.to({ alpha: 1 }, alphaFadeInTime, createjs.Ease.getPowIn(easePower))
 				.wait(visibleWaitTime + Math.abs((airTime - alphaFadeInTime)))                                    // Waits 1 second after finishing
-				.to({ alpha: 0 }, alphaFadeOutTime, createjs.Ease.getPowOut) // Fades out to 0 (Takes 1 second)
+				.to({ alpha: 0 }, alphaFadeOutTime, createjs.Ease.getPowOut(easePower)) // Fades out to 0 (Takes 1 second)
 				.call(function() {
 					stage.removeChild(textFill);               // Deletes it from the stage completely
 					});
 					
 				createjs.Tween.get(textOutline)
-				.to({ alpha: 1 }, alphaFadeInTime, createjs.Ease.getPowIn)
+				.to({ alpha: 1 }, alphaFadeInTime, createjs.Ease.getPowIn(easePower))
 				.wait(visibleWaitTime + Math.abs((airTime - alphaFadeInTime)))                                    // Waits 1 second after finishing
-				.to({ alpha: 0 }, alphaFadeOutTime, createjs.Ease.getPowOut) // Fades out to 0 (Takes 1 second)
+				.to({ alpha: 0 }, alphaFadeOutTime, createjs.Ease.getPowOut(easePower)) // Fades out to 0 (Takes 1 second)
 				.call(function() {
 					stage.removeChild(textOutline);               // Deletes it from the stage completely
 					});
@@ -88,9 +87,14 @@
 				document.fonts.load("150px brawlstarsmenufont");
 				console.log("Init complete");
 				init_state = true;
+				
+				hookToEventSource();
 			}
 			
-			eventSource.onmessage = async (event) => {
+			function hookToEventSource(){
+				const eventSource = new EventSource(`http://localhost:${port}/follower_stream`);
+				
+				eventSource.onmessage = async (event) => {
 				if(init_state == true) {
 					let infoObject = JSON.parse(event.data)
 					
@@ -100,18 +104,20 @@
 							return text.replaceAll("[USERNAME]", infoObject.username);
 						});
 						
-					let textFill = new createjs.Text(rankText, "50px brawlstarsmenufont", "#FFFFFF");
+					let textFill = new createjs.Text(rankText, "100px brawlstarsmenufont", "#FFFFFF");
 					textFill.x = middleOfCanvasXY;
 					textFill.y = textYDefaultValue;
 					textFill.textAlign = "center";
 					textFill.alpha = 0;
+					textFill.maxWidth = stage.canvas.width;
 					
-					let textOutline = new createjs.Text(rankText, "50px brawlstarsmenufont", "#000000");
+					let textOutline = new createjs.Text(rankText, "100px brawlstarsmenufont", "#000000");
 					textOutline.outline = textOutlineWidth;
 					textOutline.x = textFill.x;
 					textOutline.y = textFill.y;
 					textOutline.textAlign = "center";
 					textOutline.alpha = 0;
+					textOutline.maxWidth = stage.canvas.width;
 					
 					stage.addChild(textOutline);
 					stage.addChild(textFill);
@@ -119,6 +125,9 @@
 					rankedIconAnimation(createRankedIconBitmap(infoObject.rank), textFill, textOutline);
 				}
 			};
+			}
+			
+			
 			
 			window.onbeforeunload = () => eventSource.close();
 		</script>

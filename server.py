@@ -35,23 +35,25 @@ import json
 import threading
 from queue import Queue
 import aiohttp
+from playsound3 import playsound
+from pathlib import Path
 
 config = dotenv_values(".env")
 
+PROJECT_DIR = Path(__file__).resolve().parent
 APP_ID = config["APPLICATION_CLIENT_ID"]
 APP_SECRET = config["APPLICATION_CLIENT_SECRET"]
 TARGET_SCOPES = [AuthScope.MODERATOR_READ_FOLLOWERS]
+
+new_follower_queue = Queue()
 ranks_pool = ["Bronze", "Silver", "Gold", "Diamond", "Mythic", "Legendary", "Masters", "Pro"]
+follower_display_time = 5
+check_for_new_followers_time = 1
 FAKE_NAMES = [
     "ShellySpammer", "ElPrimoLeap", "SpikeEnjoyer", "ColtMain99", 
     "MortisGod", "LeonInvis", "BrawlStarsPro", "GamerTag420",
     "NoobMaster69", "StarPlayer", "EdgarMain", "CrowPoison"
 ]
-
-new_follower_queue = Queue()
-
-follower_display_time = 5
-check_for_new_followers_time = 1
 
 def trigger_fake_follow():
 
@@ -104,6 +106,8 @@ def follower_stream():
                 json_data = json.dumps(follower_info)
                 yield f"data: {json_data}\n\n"
                 trigger_fake_follow()
+                soundfile = PROJECT_DIR / "static" / "ranked_audio" / f"{follower_info["rank"]}.mp3"
+                playsound(soundfile)
                 time.sleep(follower_display_time)
             else:
                 trigger_fake_follow()
