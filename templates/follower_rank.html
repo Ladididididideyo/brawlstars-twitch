@@ -30,7 +30,6 @@
 		</style>
 		<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
 		<script>
-			const port = 1234;
 			const staticFileEndpoint = `/static/`;
 			const fps = 120;
 			const textOutlineWidth = 15;
@@ -109,7 +108,7 @@
 			}
 			
 			function hookToEventSource(){
-				const eventSource = new EventSource(`http://localhost:${port}/follower_stream`);
+				const eventSource = new EventSource(`/follower_stream`);
 				
 				eventSource.onmessage = async (event) => {
 				if(init_state == true) {
